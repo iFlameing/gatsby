@@ -184,6 +184,7 @@ async function processRemoteNode({
   cache,
   createNode,
   auth = {},
+  headers = {},
   createNodeId,
   ext,
   name,
@@ -199,16 +200,16 @@ async function processRemoteNode({
   // See if there's response headers for this url
   // from a previous request.
   const cachedHeaders = await cache.get(cacheId(url))
-  const headers = {}
+  const custom_headers = {...headers}
 
   // Add htaccess authentication if passed in. This isn't particularly
   // extensible. We should define a proper API that we validate.
   if (auth && (auth.htaccess_pass || auth.htaccess_user)) {
-    headers.auth = `${auth.htaccess_user}:${auth.htaccess_pass}`
+    custom_headers.auth = `${auth.htaccess_user}:${auth.htaccess_pass}`
   }
 
   if (cachedHeaders && cachedHeaders.etag) {
-    headers[`If-None-Match`] = cachedHeaders.etag
+    custom_headers[`If-None-Match`] = cachedHeaders.etag
   }
 
   // Create the temp and permanent file names for the url.
@@ -223,7 +224,7 @@ async function processRemoteNode({
   const tmpFilename = createFilePath(pluginCacheDir, `tmp-${digest}`, ext)
 
   // Fetch the file.
-  const response = await requestRemoteNode(url, headers, tmpFilename)
+  const response = await requestRemoteNode(url, custom_headers, tmpFilename)
   // Save the response headers for future requests.
   await cache.set(cacheId(url), response.headers)
 
@@ -306,6 +307,7 @@ module.exports = ({
   cache,
   createNode,
   auth = {},
+  headers = {},
   createNodeId,
   ext = null,
   name = null,
@@ -350,6 +352,7 @@ module.exports = ({
     createNode,
     createNodeId,
     auth,
+    headers,
     ext,
     name,
   })
